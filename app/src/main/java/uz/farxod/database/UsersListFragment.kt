@@ -41,6 +41,7 @@ class UsersListFragment : Fragment() {
         binding.recyclerview.addItemDecoration(DividerItemDecoration(binding.recyclerview.context, DividerItemDecoration.VERTICAL))
 
         adapter.setOnUserClickedListener(object : OnUserClickedListener{
+//--------------------------------------------------------------------------------------------------------------------
             override fun onEditClicked(position: Int) {
                 val selectedUserToUpdate = list[position]
 
@@ -51,21 +52,39 @@ class UsersListFragment : Fragment() {
                 dialog.setView(dialogBinding.root)
                 dialog.show()   //dialog ochilishi un
 
+                //ma'l ni set qilamiz, edit_text da tayyor yozilgan turishi uchun
+                dialogBinding.editFirstname.setText(selectedUserToUpdate.firstname)
+                dialogBinding.editLastname.setText(selectedUserToUpdate.lastname)
+                dialogBinding.editAge.setText(selectedUserToUpdate.age.toString())
+
                 //dialog un
                 dialogBinding.btnSave.setOnClickListener {
-                    //DB-ga saqlaymiz
-                    if(dialogBinding.editFirstname.text.equals("") && dialogBinding.editLastname.text.equals("") && dialogBinding.editAge.text.equals(""))
-                    {
+                    //agar edit_text bo'sh bo'lmasa
+                    if(dialogBinding.editFirstname.text.isNotEmpty() && dialogBinding.editLastname.text.isNotEmpty() && dialogBinding.editAge.text.isNotEmpty()) {
+                        val userId = selectedUserToUpdate.id // id-ni oldik
+                        val updatedFirstname = dialogBinding.editFirstname.text.toString()
+                        val updatedLastname = dialogBinding.editLastname.text.toString()
+                        val updatedAge = dialogBinding.editAge.text.toString().toInt()
+                        val updatedUser = User(userId, updatedFirstname,updatedLastname, updatedAge)
 
-                    }
+                        //DB-ga yangilangan ma'lumotlarni kiritamiz
+                        databaseHelper.updateUser(userId, updatedFirstname,updatedLastname, updatedAge)
+                        adapter.notifyItemChanged(position) // adapterga pozitsiyani beramiz
+
+                        list[position] = updatedUser    // o'zgarishdan kiyin oyna yangilanishi uchun
+
                         Toast.makeText(requireContext(), "User record has been updated!", Toast.LENGTH_SHORT).show()
-                    dialog.dismiss()
-                }
+                        dialog.dismiss()
+                    }else{
+                        Toast.makeText(requireContext(), "Please fill in all fields!", Toast.LENGTH_SHORT).show()
+                    }
+
                 dialogBinding.btnCancel.setOnClickListener {
                     dialog.dismiss()
                 }
+                }
             }
-
+//--------------------------------------------------------------------------------------------------------------------
             override fun onUserLongClicked(position: Int) {
                 val deleteUserId = list[position]
                 val builder = AlertDialog.Builder(requireContext())
@@ -93,7 +112,7 @@ class UsersListFragment : Fragment() {
 
         })
     }
-
+//--------------------------------------------------------------------------------------------------------------------
     private fun initList(){
         val cursor = databaseHelper.readUser() //cursorni olib kelamiz
         if(cursor.count > 0 ){  // agar 0- dan katta bo'lsa ma'lumot mavjud
@@ -110,7 +129,7 @@ class UsersListFragment : Fragment() {
             }
         }
     }
-
+//--------------------------------------------------------------------------------------------------------------------
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
