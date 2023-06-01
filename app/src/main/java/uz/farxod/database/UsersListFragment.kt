@@ -1,13 +1,17 @@
 package uz.farxod.database
 
+import android.app.AlertDialog
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import uz.farxod.database.databinding.CustomDeletDialogBinding
+import uz.farxod.database.databinding.CustomUpdateDialogBinding
 import uz.farxod.database.databinding.FragmentUsersListBinding
 
 class UsersListFragment : Fragment() {
@@ -35,6 +39,59 @@ class UsersListFragment : Fragment() {
 
         // Reciycler view orasiga chiziq chizish uchun
         binding.recyclerview.addItemDecoration(DividerItemDecoration(binding.recyclerview.context, DividerItemDecoration.VERTICAL))
+
+        adapter.setOnUserClickedListener(object : OnUserClickedListener{
+            override fun onEditClicked(position: Int) {
+                val selectedUserToUpdate = list[position]
+
+                val builder = AlertDialog.Builder(requireContext())
+                val dialogBinding = CustomUpdateDialogBinding.inflate(layoutInflater)   //chizgan layoutimizni topib oldik
+
+                val dialog = builder.create()
+                dialog.setView(dialogBinding.root)
+                dialog.show()   //dialog ochilishi un
+
+                //dialog un
+                dialogBinding.btnSave.setOnClickListener {
+                    //DB-ga saqlaymiz
+                    if(dialogBinding.editFirstname.text.equals("") && dialogBinding.editLastname.text.equals("") && dialogBinding.editAge.text.equals(""))
+                    {
+
+                    }
+                        Toast.makeText(requireContext(), "User record has been updated!", Toast.LENGTH_SHORT).show()
+                    dialog.dismiss()
+                }
+                dialogBinding.btnCancel.setOnClickListener {
+                    dialog.dismiss()
+                }
+            }
+
+            override fun onUserLongClicked(position: Int) {
+                val deleteUserId = list[position]
+                val builder = AlertDialog.Builder(requireContext())
+                val dialogBinding = CustomDeletDialogBinding.inflate(layoutInflater)
+                val dialog = builder.create()
+                dialog.setView(dialogBinding.root)
+                dialog.show()
+
+                //dialog un
+                dialogBinding.btnYes.setOnClickListener {
+                    //DB-dan o'chiramiz
+                    databaseHelper.deleteUser(deleteUserId.id)
+                    //list (cursor) - dan o'chiramiz
+                    list.remove(deleteUserId)
+
+                    adapter.notifyItemRemoved(position) //adapterga o'chirganimizni aytamiz
+
+                    Toast.makeText(requireContext(), "Foydalanuvchi o'chirildi!", Toast.LENGTH_SHORT).show()
+                    dialog.dismiss()
+                }
+                dialogBinding.btnNo.setOnClickListener {
+                    dialog.dismiss()
+                }
+            }
+
+        })
     }
 
     private fun initList(){
